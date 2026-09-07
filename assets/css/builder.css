@@ -1,0 +1,1013 @@
+.tjdb-builder {
+	max-width: 1100px;
+	margin: 0 auto;
+	font-family: inherit;
+}
+
+/* Server-rendered theme archive markup is injected raw into the "choose
+   your setting" step (see builder.js renderSettingStep) without going
+   through Woodmart's own AJAX-filter JS lifecycle, so its loading spinner
+   never gets hidden/managed and renders as a stray icon-font glyph. It's
+   redundant anyway since our own "Loading…" placeholder already covers
+   the wait. */
+#tjdb-settings-results .wd-sticky-loader {
+	display: none !important;
+}
+
+.tjdb-stepper {
+	display: flex;
+	align-items: stretch;
+	list-style: none;
+	margin: 0 0 1.5rem;
+	padding: 0;
+	background: #fafaf8;
+	flex-wrap: wrap;
+}
+
+.tjdb-stepper.tjdb-stepper-preview {
+	margin-bottom: 1rem;
+}
+
+.tjdb-stepper.tjdb-stepper-top {
+	max-width: none;
+	width: 100%;
+	margin: 1rem 0;
+}
+
+.tjdb-stepper-item {
+	flex: 1;
+	min-width: 210px;
+	border-right: 1px solid #e2ddd3;
+}
+
+.tjdb-stepper-item:last-child {
+	border-right: none;
+}
+
+.tjdb-stepper-item.is-current {
+	background: #fff;
+}
+
+.tjdb-stepper-button {
+	width: 100%;
+	height: 100%;
+	display: flex;
+	align-items: center;
+	gap: 0.85rem;
+	background: none;
+	border: none;
+	padding: 1rem 1.25rem;
+	font: inherit;
+	text-align: left;
+	cursor: default;
+	color: inherit;
+	text-decoration: none;
+}
+
+.tjdb-stepper-item.is-clickable .tjdb-stepper-button {
+	cursor: pointer;
+}
+
+.tjdb-stepper-item.is-clickable .tjdb-stepper-button:hover {
+	background: #f2efe9;
+}
+
+.tjdb-stepper-circle {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	border-radius: 50%;
+	border: 1.5px solid #cfc8ba;
+	font-family: Georgia, 'Times New Roman', serif;
+	font-size: 1rem;
+	font-weight: 400;
+	line-height: 1;
+	color: #cfc8ba;
+	flex-shrink: 0;
+}
+
+.tjdb-stepper-item.is-completed .tjdb-stepper-circle,
+.tjdb-stepper-item.is-current .tjdb-stepper-circle {
+	color: #1a1a1a;
+	border-color: #876946;
+}
+
+.tjdb-stepper-item.is-current .tjdb-stepper-circle {
+	background: #876946;
+	color: #fff;
+}
+
+.tjdb-stepper-text {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+	flex: 1;
+}
+
+.tjdb-stepper-label {
+	font-size: 0.8rem;
+	font-weight: 700;
+	color: #1a1a1a;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.tjdb-stepper-detail {
+	font-size: 0.8rem;
+	color: #876946;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	margin-top: 0.15rem;
+}
+
+.tjdb-stepper-change {
+	font-size: 0.75rem;
+	text-decoration: underline;
+	color: #1a1a1a;
+	margin-top: 0.15rem;
+}
+
+.tjdb-stepper-icon {
+	margin-left: auto;
+	width: 28px;
+	height: 28px;
+	flex-shrink: 0;
+	color: #cfc8ba;
+	opacity: 0.9;
+}
+
+.tjdb-stepper-thumb {
+	width: 36px;
+	height: 36px;
+	object-fit: cover;
+	border-radius: 4px;
+	flex-shrink: 0;
+	margin-left: auto;
+}
+
+.tjdb-step h2 {
+	margin-bottom: 1rem;
+}
+
+.tjdb-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+	gap: 1rem;
+}
+
+.tjdb-card {
+	display: flex;
+	flex-direction: column;
+	align-items: stretch;
+	text-align: left;
+	border: 1px solid #ddd;
+	border-radius: 6px;
+	padding: 0.75rem;
+	background: #fff;
+	cursor: pointer;
+	transition: box-shadow 0.15s ease;
+}
+
+.tjdb-card:hover:not(:disabled) {
+	box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.tjdb-card:disabled {
+	opacity: 0.4;
+	cursor: not-allowed;
+}
+
+.tjdb-card img {
+	width: 100%;
+	aspect-ratio: 1;
+	object-fit: cover;
+	border-radius: 4px;
+	margin-bottom: 0.5rem;
+}
+
+.tjdb-card-media {
+	position: relative;
+	width: 100%;
+	aspect-ratio: 1;
+	overflow: hidden;
+	border-radius: 4px;
+	margin-bottom: 0.5rem;
+	background: #f5f5f5;
+	/* min-width/min-height: 0 override the flex/grid default that refuses
+	   to shrink a child below its content's intrinsic size — without it the
+	   500px-native video-scaler below inflates this whole card. */
+	min-width: 0;
+	min-height: 0;
+}
+
+.tjdb-card-media img {
+	width: 100%;
+	height: 100%;
+	aspect-ratio: auto;
+	object-fit: cover;
+	border-radius: 0;
+	margin-bottom: 0;
+}
+
+.tjdb-card-spin-badge {
+	position: absolute;
+	top: 0.4rem;
+	right: 0.4rem;
+	background: rgba(0, 0, 0, 0.6);
+	color: #fff;
+	font-size: 0.65rem;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	padding: 0.15rem 0.4rem;
+	border-radius: 3px;
+	pointer-events: none;
+}
+
+/* Built at most once per card on first hover and left in the DOM after
+   that (see bindCardSpinHover()) — hidden/shown via this class rather
+   than being torn down and rebuilt, so re-hovering the same card doesn't
+   reload the iframe from scratch every time.
+   No background of its own: if loupe360 doesn't have real media for this
+   stone, staying transparent lets the real photo underneath show through
+   instead of a blank/grey box. */
+.tjdb-card-spin-holder {
+	position: absolute;
+	inset: 0;
+	display: none;
+	overflow: hidden;
+}
+
+.tjdb-card-media.tjdb-spin-active .tjdb-card-spin-holder {
+	display: block;
+}
+
+.tjdb-video-scaler {
+	/* Matches the 500px IFRAME_NATIVE_SIZE baked into its own inline
+	   width/height in scaledIframeMarkup() — centers the native-size
+	   iframe within whatever container it's placed in before the JS
+	   transform:scale() shrinks it to fit. */
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	margin-top: -250px;
+	margin-left: -250px;
+	transform-origin: center center;
+	flex-shrink: 0;
+	min-width: 0;
+	min-height: 0;
+}
+
+.tjdb-video-scaler .tjdb-video-frame {
+	width: 100%;
+	height: 100%;
+	border: none;
+}
+
+.tjdb-card-name {
+	font-weight: 600;
+}
+
+.tjdb-card-spec {
+	font-size: 0.85rem;
+	color: #666;
+}
+
+.tjdb-card-price {
+	margin-top: 0.25rem;
+	font-weight: 600;
+}
+
+.tjdb-back {
+	background: none;
+	border: none;
+	color: #666;
+	cursor: pointer;
+	margin-bottom: 1rem;
+	padding: 0;
+	font-size: 0.9rem;
+}
+
+.tjdb-summary-row {
+	display: flex;
+	justify-content: space-between;
+	padding: 0.5rem 0;
+	border-bottom: 1px solid #eee;
+}
+
+.tjdb-summary-total {
+	font-size: 1.1rem;
+	border-bottom: none;
+	border-top: 2px solid #111;
+	margin-top: 0.5rem;
+	padding-top: 0.75rem;
+}
+
+.tjdb-add-to-cart {
+	margin-top: 1.5rem;
+	padding: 0.75rem 1.5rem;
+	background: #111;
+	color: #fff;
+	border: none;
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 1rem;
+}
+
+.tjdb-add-to-cart:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.tjdb-variation-row {
+	margin-bottom: 1rem;
+	max-width: 320px;
+}
+
+.tjdb-variation-row label {
+	display: block;
+	font-weight: 600;
+	margin-bottom: 0.25rem;
+}
+
+.tjdb-variation-row select {
+	width: 100%;
+	padding: 0.5rem;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+}
+
+.tjdb-variation-price {
+	font-weight: 600;
+	margin: 0.5rem 0 1rem;
+}
+
+.tjdb-diamond-layout {
+	display: flex;
+	gap: 2rem;
+	align-items: flex-start;
+}
+
+.tjdb-filters-panel {
+	width: 260px;
+	flex-shrink: 0;
+}
+
+.tjdb-results-panel {
+	flex: 1;
+	min-width: 0;
+}
+
+/* ---- Active filter chips ---- */
+
+.tjdb-filter-chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.4rem;
+	margin-bottom: 1.25rem;
+}
+
+.tjdb-chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 0.35rem;
+	background: #f5f2ec;
+	border: 1px solid #e2ddd3;
+	border-radius: 20px;
+	padding: 0.3rem 0.4rem 0.3rem 0.7rem;
+	font-size: 0.75rem;
+	color: #1a1a1a;
+}
+
+.tjdb-chip-remove {
+	background: none;
+	border: none;
+	cursor: pointer;
+	color: #876946;
+	font-size: 0.95rem;
+	line-height: 1;
+	padding: 0 0.15rem;
+}
+
+.tjdb-chip-reset {
+	cursor: pointer;
+	background: none;
+	border: 1px solid #cfc8ba;
+	color: #666;
+}
+
+/* ---- Collapsible filter sections ---- */
+
+.tjdb-filter-section {
+	border-bottom: 1px solid #eee;
+	padding-bottom: 1.1rem;
+	margin-bottom: 1.1rem;
+}
+
+.tjdb-filter-section > summary {
+	list-style: none;
+	cursor: pointer;
+	font-size: 0.8rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.03em;
+	margin-bottom: 0.9rem;
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+}
+
+.tjdb-filter-section > summary::-webkit-details-marker {
+	display: none;
+}
+
+.tjdb-filter-section > summary::after {
+	content: '';
+	width: 8px;
+	height: 8px;
+	border-right: 1.5px solid #876946;
+	border-bottom: 1.5px solid #876946;
+	transform: rotate(45deg);
+	transition: transform 0.15s ease;
+}
+
+.tjdb-filter-section:not([open]) > summary::after {
+	transform: rotate(-45deg);
+}
+
+.tjdb-filter-hint {
+	font-size: 0.75rem;
+	color: #876946;
+	margin: -0.5rem 0 0.75rem;
+}
+
+/* ---- Shape icon grid ---- */
+
+.tjdb-shape-grid {
+	display: grid;
+	grid-template-columns: repeat(4, 1fr);
+	gap: 0.5rem;
+}
+
+.tjdb-shape-option {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 0.3rem;
+	background: #fff;
+	border: 1px solid #e2ddd3;
+	border-radius: 4px;
+	padding: 0.5rem 0.25rem;
+	cursor: pointer;
+}
+
+.tjdb-shape-option:hover {
+	border-color: #cfc8ba;
+}
+
+.tjdb-shape-option.is-active {
+	border-color: #876946;
+	background: #f9f5ee;
+}
+
+.tjdb-shape-icon {
+	width: 26px;
+	height: 26px;
+	color: #666;
+}
+
+.tjdb-shape-option.is-active .tjdb-shape-icon {
+	color: #876946;
+}
+
+.tjdb-shape-icon svg {
+	width: 100%;
+	height: 100%;
+}
+
+.tjdb-shape-label {
+	font-size: 0.7rem;
+	color: #444;
+}
+
+/* ---- Dual-handle range sliders (carat, cut, color, clarity) ---- */
+
+.tjdb-range-slider {
+	position: relative;
+	height: 20px;
+	margin-bottom: 0.5rem;
+}
+
+.tjdb-range-track {
+	position: absolute;
+	top: 50%;
+	left: 0;
+	right: 0;
+	height: 3px;
+	background: #e2ddd3;
+	border-radius: 2px;
+	transform: translateY(-50%);
+}
+
+.tjdb-range-fill {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	background: #876946;
+	border-radius: 2px;
+}
+
+.tjdb-range-input {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 100%;
+	height: 20px;
+	margin: 0;
+	background: transparent !important;
+	pointer-events: none;
+	-webkit-appearance: none;
+	appearance: none;
+}
+
+/* Only the thumb should capture clicks — the transparent track lets both
+   overlapping inputs share the same box without one blocking the other. */
+.tjdb-range-input::-webkit-slider-thumb {
+	pointer-events: auto;
+	-webkit-appearance: none;
+	appearance: none;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: #fff;
+	border: 2px solid #876946;
+	cursor: pointer;
+	margin-top: 0;
+}
+
+.tjdb-range-input::-moz-range-thumb {
+	pointer-events: auto;
+	width: 16px;
+	height: 16px;
+	border-radius: 50%;
+	background: #fff;
+	border: 2px solid #876946;
+	cursor: pointer;
+}
+
+.tjdb-range-input::-webkit-slider-runnable-track {
+	-webkit-appearance: none;
+	appearance: none;
+	background: transparent !important;
+	background-color: transparent !important;
+	border: none;
+	box-shadow: none;
+	height: 20px;
+}
+
+.tjdb-range-input::-moz-range-track {
+	background: transparent !important;
+	background-color: transparent !important;
+	border: none;
+	box-shadow: none;
+	height: 20px;
+}
+
+.tjdb-range-values {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.75rem;
+	color: #444;
+}
+
+.tjdb-range-scale {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.65rem;
+	color: #bbb;
+	gap: 0.2rem;
+}
+
+.tjdb-range-scale span {
+	text-align: center;
+	flex: 1;
+}
+
+.tjdb-range-scale span.is-active {
+	color: #1a1a1a;
+	font-weight: 600;
+}
+
+.tjdb-toolbar {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 1rem;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+}
+
+.tjdb-view-toggle {
+	display: flex;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.tjdb-view-toggle button {
+	border: none;
+	background: #fff;
+	padding: 0.4rem 0.9rem;
+	font-size: 0.85rem;
+	cursor: pointer;
+}
+
+.tjdb-view-toggle button + button {
+	border-left: 1px solid #ccc;
+}
+
+.tjdb-view-toggle button.active {
+	background: #111;
+	color: #fff;
+}
+
+.tjdb-sort-select {
+	font-size: 0.85rem;
+	display: flex;
+	align-items: center;
+	gap: 0.4rem;
+}
+
+.tjdb-sort-select select {
+	padding: 0.4rem;
+	border: 1px solid #ccc;
+	border-radius: 4px;
+	font: inherit;
+}
+
+.tjdb-list {
+	display: flex;
+	flex-direction: column;
+	border: 1px solid #eee;
+	border-radius: 6px;
+	overflow: hidden;
+}
+
+.tjdb-list-head,
+.tjdb-list-row {
+	display: grid !important;
+	grid-template-columns: 1.3fr 1fr 0.8fr 0.8fr 0.7fr 0.8fr 0.7fr;
+	gap: 0.5rem;
+	align-items: center;
+	padding: 0.5rem 1rem;
+}
+
+.tjdb-list-head {
+	background: #fafafa;
+	font-size: 0.75rem;
+	font-weight: 700;
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	color: #666;
+}
+
+.tjdb-list-row {
+	background: #fff;
+	border-top: 1px solid #eee;
+}
+
+.tjdb-list-row.is-disabled {
+	opacity: 0.4;
+}
+
+.tjdb-list-row:hover {
+	background: #fafafa;
+}
+
+.tjdb-list-cell {
+	text-align: left;
+}
+
+button.tjdb-list-cell {
+	background: none;
+	border: none;
+	font: inherit;
+	padding: 0;
+	cursor: pointer;
+	color: inherit;
+}
+
+button.tjdb-list-cell:disabled {
+	cursor: not-allowed;
+	color: #ccc;
+}
+
+.tjdb-list-cell-shape {
+	font-weight: 600;
+}
+
+.tjdb-list-cell-price {
+	font-weight: 600;
+	text-align: right;
+}
+
+.tjdb-list-cell-compare {
+	text-align: center;
+}
+
+.tjdb-list-cell-sortable {
+	text-transform: uppercase;
+	letter-spacing: 0.02em;
+	font-size: 0.75rem;
+	font-weight: 700;
+	color: #666 !important;
+	white-space: nowrap;
+}
+
+.tjdb-list-cell-sortable:hover {
+	color: #111 !important;
+}
+
+.tjdb-compare-toggle {
+	border: 1px solid #ccc;
+	background: #fff;
+	border-radius: 4px;
+	padding: 0.4rem 0.9rem;
+	font-size: 0.85rem;
+	cursor: pointer;
+}
+
+.tjdb-compare-toggle:disabled {
+	opacity: 0.5;
+	cursor: not-allowed;
+}
+
+.tjdb-modal-overlay {
+	position: fixed;
+	inset: 0;
+	background: rgba(0, 0, 0, 0.6);
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	z-index: 100000;
+	padding: 1.5rem;
+}
+
+.tjdb-modal {
+	background: #fff;
+	border-radius: 8px;
+	max-width: 640px;
+	width: 100%;
+	max-height: 90vh;
+	overflow-y: auto;
+	padding: 1.5rem;
+	position: relative;
+}
+
+.tjdb-diamond-modal {
+	max-width: 780px;
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 2rem;
+}
+
+.tjdb-compare-modal {
+	max-width: 90vw;
+	overflow-x: auto;
+}
+
+.tjdb-modal-close {
+	position: absolute !important;
+	top: 0.75rem !important;
+	right: 0.75rem !important;
+	background: none;
+	border: none;
+	font-size: 1.5rem;
+	line-height: 1;
+	cursor: pointer;
+	color: #666;
+	z-index: 1;
+}
+
+.tjdb-modal-media-col {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.tjdb-modal-viewer {
+	background: #f5f5f5;
+	border-radius: 6px;
+	overflow: hidden;
+	aspect-ratio: 1;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	min-width: 0;
+	min-height: 0;
+	width: 100%;
+}
+
+.tjdb-modal-media-frame {
+	width: 100%;
+	height: 100%;
+	min-width: 0;
+	min-height: 0;
+	border: none;
+}
+
+.tjdb-modal-video-scaler {
+	flex-shrink: 0;
+	transform-origin: center center;
+}
+
+.tjdb-modal-video-scaler .tjdb-modal-media-frame {
+	width: 100%;
+	height: 100%;
+}
+
+.tjdb-modal-image {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.tjdb-modal-media-empty {
+	color: #999;
+	font-size: 0.85rem;
+	padding: 2rem;
+	text-align: center;
+}
+
+.tjdb-modal-media-caption {
+	text-align: center;
+	font-size: 0.8rem;
+	color: #666;
+	margin: 0.5rem 0 0;
+}
+
+.tjdb-modal-cert-preview {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	height: 100%;
+}
+
+.tjdb-modal-cert-preview .tjdb-modal-media-frame {
+	flex: 1;
+	min-height: 0;
+}
+
+.tjdb-modal-cert-link {
+	text-align: center;
+	font-size: 0.8rem;
+	padding: 0.5rem;
+	color: #876946;
+	text-decoration: underline;
+}
+
+.tjdb-modal-thumbs {
+	display: flex;
+	gap: 0.5rem;
+	margin-top: 0.75rem;
+}
+
+.tjdb-modal-thumb {
+	width: 56px;
+	height: 56px;
+	border: 2px solid transparent;
+	border-radius: 4px;
+	overflow: hidden;
+	padding: 0;
+	background: #f5f5f5;
+	cursor: pointer;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+}
+
+.tjdb-modal-thumb.active {
+	border-color: #111;
+}
+
+.tjdb-modal-thumb img {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+}
+
+.tjdb-modal-thumb-play,
+.tjdb-modal-thumb-cert,
+.tjdb-modal-thumb-spin {
+	font-size: 0.7rem;
+	color: #666;
+}
+
+.tjdb-modal-info-col h3 {
+	margin: 0 0 0.4rem;
+	font-size: 1.1rem;
+}
+
+.tjdb-modal-price {
+	font-size: 1.3rem;
+	font-weight: 700;
+	color: #876946;
+	margin-bottom: 0.75rem;
+}
+
+.tjdb-modal-badges {
+	display: flex;
+	gap: 0.4rem;
+	flex-wrap: wrap;
+	margin-bottom: 1rem;
+}
+
+.tjdb-modal-badge {
+	background: #f2efe9;
+	color: #876946;
+	font-size: 0.7rem;
+	font-weight: 700;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+	padding: 0.3rem 0.6rem;
+	border-radius: 3px;
+}
+
+.tjdb-modal-spec-grid {
+	display: grid;
+	grid-template-columns: 1fr 1fr;
+	gap: 0.6rem 1.5rem;
+	padding: 1rem 0;
+	border-top: 1px solid #eee;
+	border-bottom: 1px solid #eee;
+	margin-bottom: 1.25rem;
+}
+
+.tjdb-modal-spec-item {
+	display: flex;
+	justify-content: space-between;
+	font-size: 0.85rem;
+}
+
+.tjdb-modal-spec-item span {
+	color: #666;
+}
+
+.tjdb-modal-select {
+	width: 100%;
+	margin-top: 0;
+}
+
+@media (max-width: 640px) {
+	.tjdb-diamond-modal {
+		grid-template-columns: 1fr;
+	}
+}
+
+.tjdb-compare-table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+.tjdb-compare-table th,
+.tjdb-compare-table td {
+	padding: 0.6rem 1rem;
+	border-bottom: 1px solid #eee;
+	text-align: left;
+	white-space: nowrap;
+}
+
+.tjdb-compare-table th {
+	color: #666;
+	font-weight: 600;
+}
+
+@media (max-width: 700px) {
+	.tjdb-diamond-layout {
+		flex-direction: column;
+	}
+
+	.tjdb-filters-panel {
+		width: 100%;
+	}
+
+	.tjdb-list-head,
+	.tjdb-list-row {
+		grid-template-columns: 1.3fr 1fr 0.8fr;
+	}
+
+	.tjdb-list-head > :nth-child(n + 4),
+	.tjdb-list-row > :nth-child(n + 4) {
+		display: none;
+	}
+}
+
+.tjdb-error {
+	color: #b32d2e;
+}
+
+.tjdb-loading {
+	color: #666;
+}
