@@ -86,6 +86,7 @@
 		list: '<path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" />',
 		x: '<path d="M18 6 6 18" /><path d="m6 6 12 12" />',
 		sliders: '<path d="M10 5H3" /><path d="M12 19H3" /><path d="M14 3v4" /><path d="M16 17v4" /><path d="M21 12h-9" /><path d="M21 19h-5" /><path d="M21 5h-7" /><path d="M8 10v4" /><path d="M8 12H3" />',
+		heart: '<path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.29 1.5 4.04 3 5.5l7 7Z" />',
 	};
 
 	function lucideIcon(name, className) {
@@ -107,6 +108,19 @@
 		{ value: 'EX', label: 'Excellent' },
 		{ value: 'ID', label: 'Ideal' },
 	];
+	// Nivoda's DiamondFluorescenseIntensity enum, worst(most intense)-to-best
+	// (none) to match the CUT_SLIDER_OPTIONS convention — codes are Nivoda's
+	// own (e.g. "STN"/"STG" both mean shades of Strong), not ours to rename.
+	var FLUORESCENCE_SLIDER_OPTIONS = [
+		{ value: 'VST', label: 'Very Strong' },
+		{ value: 'STN', label: 'Strong+' },
+		{ value: 'STG', label: 'Strong' },
+		{ value: 'MED', label: 'Medium' },
+		{ value: 'FNT', label: 'Faint' },
+		{ value: 'SLT', label: 'Slight' },
+		{ value: 'VSL', label: 'Very Slight' },
+		{ value: 'NON', label: 'None' },
+	];
 	var COLOR_SLIDER_OPTIONS = COLORS.slice().reverse();
 	var CLARITY_SLIDER_OPTIONS = CLARITIES.slice().reverse();
 
@@ -117,12 +131,16 @@
 		selectedAttributes: null, // { attribute_key: value } — chosen ring-size/metal etc. options for the current setting
 		diamond: null, // summary object from search results
 		step: 'diamond', // 'diamond' | 'setting' | 'complete'
+		labgrown: false, // false = natural, true = lab grown
 		shape: null,
 		caratFrom: null,
 		caratTo: null,
+		ratioFrom: null,
+		ratioTo: null,
 		color: [],
 		clarity: [],
 		cut: [],
+		fluorescence: [],
 		sort: 'popular:DESC',
 		viewMode: 'grid', // 'grid' | 'list'
 		searchToken: 0,
@@ -480,7 +498,8 @@
 		if (state.setting) {
 			html += '<button class="tjdb-back" data-action="back-to-setting">← Back to ' + esc(state.setting.name) + '</button>';
 		}
-		html += '<h2>Choose your diamond</h2>';
+
+		html += '<div id="tjdb-active-filters">' + filterChipsHtml() + '</div>';
 
 		html += '<div class="tjdb-diamond-layout">';
 		html += renderFiltersPanel();
@@ -538,6 +557,15 @@
 		return [Math.min.apply(null, indexes), Math.max.apply(null, indexes)];
 	}
 
+	function renderLabGrownSection() {
+		var html = '<details class="tjdb-filter-section" open><summary>Diamond Type</summary>';
+		html += '<div class="tjdb-labgrown-toggle">';
+		html += '<button type="button" class="tjdb-labgrown-option' + (!state.labgrown ? ' is-active' : '') + '" data-labgrown="0">Natural</button>';
+		html += '<button type="button" class="tjdb-labgrown-option' + (state.labgrown ? ' is-active' : '') + '" data-labgrown="1">Lab Grown</button>';
+		html += '</div></details>';
+		return html;
+	}
+
 	function renderShapeSection() {
 		var shapes = availableShapes();
 		if (shapes.length <= 1) return '';
@@ -580,12 +608,35 @@
 		return html;
 	}
 
-	function renderCategorySection(title, key, rawOptions) {
+	// Length-to-width ratio (e.g. 1.00 for a perfectly round/square stone,
+	// higher for elongated fancy shapes) — Nivoda computes and filters on
+	// this directly (`ratio: FloatRange`), so there's no client-side math.
+	function ratioBounds() {
+		return [1, 3];
+	}
+
+	function renderRatioSection() {
+		var bounds = ratioBounds();
+		var lo = state.ratioFrom !== null ? state.ratioFrom : bounds[0];
+		var hi = state.ratioTo !== null ? state.ratioTo : bounds[1];
+
+		var html = '<details class="tjdb-filter-section"><summary>L:W Ratio</summary>';
+		html += '<div class="tjdb-range-slider" data-slider-key="ratio">';
+		html += '<div class="tjdb-range-track"><div class="tjdb-range-fill"></div></div>';
+		html += '<input type="range" class="tjdb-range-input tjdb-range-min" min="' + bounds[0] + '" max="' + bounds[1] + '" step="0.01" value="' + lo + '" aria-label="Minimum length-to-width ratio">';
+		html += '<input type="range" class="tjdb-range-input tjdb-range-max" min="' + bounds[0] + '" max="' + bounds[1] + '" step="0.01" value="' + hi + '" aria-label="Maximum length-to-width ratio">';
+		html += '</div>';
+		html += '<div class="tjdb-range-values"><span data-ratio-from>' + lo.toFixed(2) + '</span><span data-ratio-to>' + hi.toFixed(2) + '</span></div>';
+		html += '</details>';
+		return html;
+	}
+
+	function renderCategorySection(title, key, rawOptions, openByDefault) {
 		var options = sliderOptions(rawOptions);
 		var range = selectedIndexRange(options, state[key]);
 		var lastIndex = options.length - 1;
 
-		var html = '<details class="tjdb-filter-section" open><summary>' + esc(title) + '</summary>';
+		var html = '<details class="tjdb-filter-section"' + (openByDefault !== false ? ' open' : '') + '><summary>' + esc(title) + '</summary>';
 		html += '<div class="tjdb-range-slider" data-slider-key="' + esc(key) + '">';
 		html += '<div class="tjdb-range-track"><div class="tjdb-range-fill"></div></div>';
 		html += '<input type="range" class="tjdb-range-input tjdb-range-min" min="0" max="' + lastIndex + '" step="1" value="' + range[0] + '" aria-label="Minimum ' + esc(title) + '">';
@@ -604,6 +655,7 @@
 	// revert it to) and the state key to reset for every other chip.
 	function activeChips() {
 		var chips = [];
+		chips.push({ label: state.labgrown ? 'Lab Grown' : 'Natural', clear: null });
 		if (state.shape) {
 			chips.push({ label: shapeLabel(state.shape), clear: null });
 		}
@@ -615,9 +667,17 @@
 			chips.push({ label: lo.toFixed(2) + ' – ' + hi.toFixed(2) + 'ct', clear: 'carat' });
 		}
 
+		var ratioBoundsVal = ratioBounds();
+		var ratioLo = state.ratioFrom !== null ? state.ratioFrom : ratioBoundsVal[0];
+		var ratioHi = state.ratioTo !== null ? state.ratioTo : ratioBoundsVal[1];
+		if (ratioLo > ratioBoundsVal[0] || ratioHi < ratioBoundsVal[1]) {
+			chips.push({ label: 'Ratio: ' + ratioLo.toFixed(2) + ' – ' + ratioHi.toFixed(2), clear: 'ratio' });
+		}
+
 		if (state.cut.length) chips.push({ label: 'Cut: ' + state.cut.length + ' selected', clear: 'cut' });
 		if (state.color.length) chips.push({ label: 'Color: ' + state.color.slice().sort().join(', '), clear: 'color' });
 		if (state.clarity.length) chips.push({ label: 'Clarity: ' + state.clarity.slice().sort().join(', '), clear: 'clarity' });
+		if (state.fluorescence.length) chips.push({ label: 'Fluorescence: ' + state.fluorescence.length + ' selected', clear: 'fluorescence' });
 
 		return chips;
 	}
@@ -636,7 +696,7 @@
 			html += '</span>';
 		});
 		if (hasClearable) {
-			html += '<button type="button" class="tjdb-chip tjdb-chip-reset" id="tjdb-clear-filters">' + lucideIcon('x', 'tjdb-chip-icon') + '<span>Reset All</span></button>';
+			html += '<button type="button" class="tjdb-chip tjdb-chip-reset" id="tjdb-clear-filters"><span>Reset All</span>' + lucideIcon('x', 'tjdb-chip-icon') + '</button>';
 		}
 		html += '</div>';
 		return html;
@@ -645,18 +705,49 @@
 	function renderFiltersPanel() {
 		var html = '<div class="tjdb-filters-panel">';
 		html += '<div class="tjdb-filters-heading">' + lucideIcon('sliders', 'tjdb-filters-heading-icon') + '<span>Filters</span></div>';
-		html += filterChipsHtml();
+		html += renderLabGrownSection();
 		html += renderShapeSection();
 		html += renderCaratSection();
 		html += renderCategorySection('Cut', 'cut', CUT_SLIDER_OPTIONS);
 		html += renderCategorySection('Color', 'color', COLOR_SLIDER_OPTIONS);
 		html += renderCategorySection('Clarity', 'clarity', CLARITY_SLIDER_OPTIONS);
+		// Less commonly used — collapsed and pushed to the bottom so the
+		// everyday 4Cs+shape filters aren't pushed below the fold by them.
+		html += renderRatioSection();
+		html += renderCategorySection('Fluorescence', 'fluorescence', FLUORESCENCE_SLIDER_OPTIONS, false);
 		html += '</div>';
 		return html;
 	}
 
 	function compareCount() {
 		return Object.keys(state.compareDiamonds).length;
+	}
+
+	// Single source of truth for adding/removing a diamond from the compare
+	// set and keeping every surface that reflects it (toolbar button, grid
+	// heart, list checkbox, the compare modal itself) in sync — used by all
+	// four instead of each duplicating the same three lines.
+	function setCompared(diamond, active) {
+		if (active) {
+			state.compareDiamonds[diamond.diamond_id] = diamond;
+		} else {
+			delete state.compareDiamonds[diamond.diamond_id];
+		}
+
+		var compareBtn = root.querySelector('#tjdb-open-compare');
+		if (compareBtn) {
+			compareBtn.textContent = 'Compare (' + compareCount() + ')';
+			compareBtn.disabled = !compareCount();
+		}
+
+		var heart = root.querySelector('[data-compare-toggle="' + diamond.diamond_id + '"]');
+		if (heart) {
+			heart.classList.toggle('is-active', active);
+			heart.setAttribute('aria-checked', active ? 'true' : 'false');
+		}
+
+		var checkbox = root.querySelector('[data-compare-id="' + diamond.diamond_id + '"]');
+		if (checkbox) checkbox.checked = active;
 	}
 
 	function renderToolbar() {
@@ -681,8 +772,11 @@
 		state.color = [];
 		state.clarity = [];
 		state.cut = [];
+		state.fluorescence = [];
 		state.caratFrom = state.setting ? state.setting.min_carat || null : null;
 		state.caratTo = state.setting ? state.setting.max_carat || null : null;
+		state.ratioFrom = null;
+		state.ratioTo = null;
 		renderDiamondStep();
 	}
 
@@ -690,6 +784,9 @@
 		if (key === 'carat') {
 			state.caratFrom = state.setting ? state.setting.min_carat || null : null;
 			state.caratTo = state.setting ? state.setting.max_carat || null : null;
+		} else if (key === 'ratio') {
+			state.ratioFrom = null;
+			state.ratioTo = null;
 		} else {
 			state[key] = [];
 		}
@@ -748,6 +845,13 @@
 	function bindFilterEvents() {
 		bindChipEvents(root);
 
+		root.querySelectorAll('[data-labgrown]').forEach(function (button) {
+			button.addEventListener('click', function () {
+				state.labgrown = button.getAttribute('data-labgrown') === '1';
+				renderDiamondStep();
+			});
+		});
+
 		root.querySelectorAll('[data-shape]').forEach(function (button) {
 			button.addEventListener('click', function () {
 				state.shape = button.getAttribute('data-shape');
@@ -771,10 +875,27 @@
 			});
 		}
 
+		var ratioWrap = root.querySelector('.tjdb-range-slider[data-slider-key="ratio"]');
+		if (ratioWrap) {
+			var ratioBoundsVal = ratioBounds();
+			var ratioFromLabel = ratioWrap.parentElement.querySelector('[data-ratio-from]');
+			var ratioToLabel = ratioWrap.parentElement.querySelector('[data-ratio-to]');
+			bindRangeSlider(ratioWrap, function (loValue, hiValue, committed) {
+				if (ratioFromLabel) ratioFromLabel.textContent = loValue.toFixed(2);
+				if (ratioToLabel) ratioToLabel.textContent = hiValue.toFixed(2);
+				if (!committed) return;
+				state.ratioFrom = loValue <= ratioBoundsVal[0] ? null : loValue;
+				state.ratioTo = hiValue >= ratioBoundsVal[1] ? null : hiValue;
+				runDiamondSearch();
+				refreshFilterChips();
+			});
+		}
+
 		[
 			['cut', CUT_SLIDER_OPTIONS],
 			['color', COLOR_SLIDER_OPTIONS],
 			['clarity', CLARITY_SLIDER_OPTIONS],
+			['fluorescence', FLUORESCENCE_SLIDER_OPTIONS],
 		].forEach(function (pair) {
 			var key = pair[0];
 			var options = sliderOptions(pair[1]);
@@ -796,16 +917,10 @@
 	// re-render mid-interaction, which would rebuild the very slider the
 	// customer's pointer is still on.
 	function refreshFilterChips() {
-		var panel = root.querySelector('.tjdb-filters-panel');
-		if (!panel) return;
-		var existing = panel.querySelector('.tjdb-filter-chips');
-		var html = filterChipsHtml();
-		if (existing) {
-			existing.outerHTML = html;
-		} else if (html) {
-			panel.insertAdjacentHTML('afterbegin', html);
-		}
-		bindChipEvents(panel);
+		var container = root.querySelector('#tjdb-active-filters');
+		if (!container) return;
+		container.innerHTML = filterChipsHtml();
+		bindChipEvents(container);
 	}
 
 	function bindToolbarEvents() {
@@ -1066,34 +1181,100 @@
 		});
 	}
 
-	function openCompareModal() {
-		var diamonds = Object.keys(state.compareDiamonds).map(function (id) {
-			return state.compareDiamonds[id];
+	// Index of `value` within a best-first ordered list (0 = best), or null
+	// when the value is missing/unrecognized — used to rank quality grades
+	// (cut/color/clarity/fluorescence) for the compare modal's "best" flags,
+	// the same way COLORS/CLARITIES/CUTS already order best-first elsewhere.
+	function gradeRank(bestFirstList, value) {
+		if (!value) return null;
+		var index = bestFirstList.indexOf(value);
+		return index === -1 ? null : index;
+	}
+
+	var FLUORESCENCE_BEST_FIRST = FLUORESCENCE_SLIDER_OPTIONS.slice().reverse().map(function (o) { return o.value; });
+	var CUT_VALUES_BEST_FIRST = CUTS.map(function (o) { return o.value; });
+
+	function fluorescenceLabel(code) {
+		var opt = FLUORESCENCE_SLIDER_OPTIONS.filter(function (o) { return o.value === code; })[0];
+		return opt ? opt.label : null;
+	}
+
+	function diamondRatio(d) {
+		var l = d.certificate.length;
+		var w = d.certificate.width;
+		if (!l || !w) return null;
+		return l / w;
+	}
+
+	// Each row: label, the display string for one diamond, and an optional
+	// rank (lower = better) used only to flag the best cell(s) in that row —
+	// omitted for rows (shape, ratio, "fits setting") that have no single
+	// objectively "better" value.
+	var COMPARE_ROWS = [
+		{ label: 'Shape', display: function (d) { return shapeLabel(d.certificate.shape || ''); } },
+		{
+			label: 'Carat',
+			display: function (d) { return d.certificate.carats.toFixed(2) + 'ct'; },
+			rank: function (d) { return -d.certificate.carats; },
+		},
+		{
+			label: 'Cut',
+			display: function (d) { return d.certificate.cut || '—'; },
+			rank: function (d) { return gradeRank(CUT_VALUES_BEST_FIRST, d.certificate.cut); },
+		},
+		{
+			label: 'Color',
+			display: function (d) { return d.certificate.color || '—'; },
+			rank: function (d) { return gradeRank(COLORS, d.certificate.color); },
+		},
+		{
+			label: 'Clarity',
+			display: function (d) { return d.certificate.clarity || '—'; },
+			rank: function (d) { return gradeRank(CLARITIES, d.certificate.clarity); },
+		},
+		{
+			label: 'Fluorescence',
+			display: function (d) { return fluorescenceLabel(d.certificate.fluorescence) || '—'; },
+			rank: function (d) { return gradeRank(FLUORESCENCE_BEST_FIRST, d.certificate.fluorescence); },
+		},
+		{
+			label: 'L:W Ratio',
+			display: function (d) { var r = diamondRatio(d); return r ? r.toFixed(2) : '—'; },
+		},
+		{
+			label: 'Price',
+			display: function (d) { return formatPrice(d.price_cents); },
+			rank: function (d) { return d.price_cents; },
+		},
+	];
+
+	function renderCompareModalContent(diamonds) {
+		var html = '<button type="button" class="tjdb-modal-close" id="tjdb-modal-close" aria-label="Close">' + lucideIcon('x', 'tjdb-modal-close-icon') + '</button>';
+		html += '<h3>Compare Diamonds<span class="tjdb-compare-count">' + diamonds.length + '</span></h3>';
+		html += '<table class="tjdb-compare-table">';
+
+		html += '<thead><tr><th class="tjdb-compare-corner"></th>';
+		diamonds.forEach(function (d) {
+			html += '<th class="tjdb-compare-col-head">';
+			if (d.image) {
+				html += '<img src="' + esc(d.image) + '" alt="' + esc(d.certificate.shape || 'diamond') + '" class="tjdb-compare-thumb">';
+			} else {
+				html += '<span class="tjdb-compare-thumb tjdb-compare-thumb-empty"></span>';
+			}
+			html += '<span class="tjdb-compare-title">' + esc(d.certificate.carats.toFixed(2)) + 'ct ' + esc(shapeLabel(d.certificate.shape || '')) + '</span>';
+			html += '</th>';
 		});
-		if (!diamonds.length) return;
+		html += '</tr></thead><tbody>';
 
-		var rows = [
-			['Shape', function (d) { return d.certificate.shape; }],
-			['Carat', function (d) { return d.certificate.carats.toFixed(2); }],
-			['Color', function (d) { return d.certificate.color; }],
-			['Clarity', function (d) { return d.certificate.clarity; }],
-			['Cut', function (d) { return d.certificate.cut; }],
-			['Price', function (d) { return formatPrice(d.price_cents); }],
-		];
+		COMPARE_ROWS.forEach(function (row) {
+			var ranks = row.rank ? diamonds.map(row.rank) : null;
+			var bestRank = ranks ? Math.min.apply(null, ranks.filter(function (r) { return r !== null && r !== undefined; })) : null;
+			var isMeaningful = ranks && ranks.some(function (r, i) { return r !== null && ranks.some(function (other, j) { return j !== i && other !== null && other !== r; }); });
 
-		var overlay = document.createElement('div');
-		overlay.id = 'tjdb-modal-overlay';
-		overlay.className = 'tjdb-modal-overlay';
-
-		var html = '<div class="tjdb-modal tjdb-compare-modal">';
-		html += '<button type="button" class="tjdb-modal-close" id="tjdb-modal-close" aria-label="Close">' + lucideIcon('x', 'tjdb-modal-close-icon') + '</button>';
-		html += '<h3>Compare Diamonds</h3>';
-		html += '<table class="tjdb-compare-table"><tbody>';
-
-		rows.forEach(function (row) {
-			html += '<tr><th>' + esc(row[0]) + '</th>';
-			diamonds.forEach(function (d) {
-				html += '<td>' + esc(row[1](d)) + '</td>';
+			html += '<tr><th>' + esc(row.label) + '</th>';
+			diamonds.forEach(function (d, i) {
+				var isBest = isMeaningful && ranks[i] !== null && ranks[i] !== undefined && ranks[i] === bestRank;
+				html += '<td' + (isBest ? ' class="tjdb-compare-best"' : '') + '>' + esc(row.display(d)) + (isBest ? ' ' + lucideIcon('check', 'tjdb-compare-best-icon') : '') + '</td>';
 			});
 			html += '</tr>';
 		});
@@ -1105,36 +1286,79 @@
 		if (state.setting) {
 			html += '<tr><th>Fits selected setting</th>';
 			diamonds.forEach(function (d) {
-				html += '<td>' + (isDiamondCompatibleWithSetting(d) ? 'Yes' : 'No') + '</td>';
+				var fits = isDiamondCompatibleWithSetting(d);
+				html += '<td class="' + (fits ? 'tjdb-compare-yes' : 'tjdb-compare-no') + '">' + (fits ? 'Yes' : 'No') + '</td>';
 			});
 			html += '</tr>';
 		}
 
-		html += '<tr><th></th>';
+		html += '</tbody><tfoot><tr><td></td>';
 		diamonds.forEach(function (d) {
-			html += '<td><button type="button" class="tjdb-add-to-cart" data-select-compare="' + esc(d.diamond_id) + '"' + (isDiamondCompatibleWithSetting(d) ? '' : ' disabled') + '>Select</button></td>';
+			html += '<td><button type="button" class="tjdb-add-to-cart tjdb-modal-select" data-select-compare="' + esc(d.diamond_id) + '"' + (isDiamondCompatibleWithSetting(d) ? '' : ' disabled') + '>Select</button></td>';
 		});
-		html += '</tr>';
-		html += '</tbody></table></div>';
+		html += '</tr><tr><td></td>';
+		diamonds.forEach(function (d) {
+			html += '<td><button type="button" class="tjdb-compare-remove" data-remove-compare="' + esc(d.diamond_id) + '">' + lucideIcon('x', 'tjdb-compare-remove-icon') + '<span>Remove from Comparison</span></button></td>';
+		});
+		html += '</tr></tfoot></table>';
 
-		overlay.innerHTML = html;
+		return html;
+	}
+
+	function openCompareModal() {
+		var diamonds = Object.keys(state.compareDiamonds).map(function (id) {
+			return state.compareDiamonds[id];
+		});
+		if (!diamonds.length) return;
+
+		var overlay = document.createElement('div');
+		overlay.id = 'tjdb-modal-overlay';
+		overlay.className = 'tjdb-modal-overlay';
+
+		var modal = document.createElement('div');
+		modal.className = 'tjdb-modal tjdb-compare-modal';
+		modal.innerHTML = renderCompareModalContent(diamonds);
+		overlay.appendChild(modal);
 		document.body.appendChild(overlay);
+
+		function bindCompareModalEvents() {
+			document.getElementById('tjdb-modal-close').addEventListener('click', closeModal);
+
+			modal.querySelectorAll('[data-select-compare]').forEach(function (button) {
+				button.addEventListener('click', function () {
+					selectDiamondAndAdvance(state.compareDiamonds[button.getAttribute('data-select-compare')]);
+				});
+			});
+
+			modal.querySelectorAll('[data-remove-compare]').forEach(function (button) {
+				button.addEventListener('click', function () {
+					var id = button.getAttribute('data-remove-compare');
+					setCompared(state.compareDiamonds[id], false);
+					diamonds = Object.keys(state.compareDiamonds).map(function (cid) {
+						return state.compareDiamonds[cid];
+					});
+					if (!diamonds.length) {
+						closeModal();
+						return;
+					}
+					modal.innerHTML = renderCompareModalContent(diamonds);
+					bindCompareModalEvents();
+				});
+			});
+		}
+
+		bindCompareModalEvents();
 
 		overlay.addEventListener('click', function (e) {
 			if (e.target === overlay) closeModal();
-		});
-		document.getElementById('tjdb-modal-close').addEventListener('click', closeModal);
-
-		overlay.querySelectorAll('[data-select-compare]').forEach(function (button) {
-			button.addEventListener('click', function () {
-				selectDiamondAndAdvance(state.compareDiamonds[button.getAttribute('data-select-compare')]);
-			});
 		});
 	}
 
 	function renderDiamondCard(diamond) {
 		var disabled = diamond.availability !== 'AVAILABLE' ? ' disabled' : '';
+		var isCompared = !!state.compareDiamonds[diamond.diamond_id];
 		var html = '<button class="tjdb-card" data-diamond-id="' + esc(diamond.diamond_id) + '"' + disabled + '>';
+		html += '<span class="tjdb-card-favorite' + (isCompared ? ' is-active' : '') + '" data-compare-toggle="' + esc(diamond.diamond_id) + '" role="checkbox" aria-checked="' + (isCompared ? 'true' : 'false') + '" aria-label="Add to compare">' + lucideIcon('heart') + '</span>';
 		if (diamond.spin_url) {
 			// The static image is what actually loads; the 360° spin only
 			// swaps in on hover (see bindCardSpinHover()) rather than up
@@ -1186,11 +1410,15 @@
 
 		searchDiamonds({
 			shapes: state.shape ? [state.shape] : availableShapes(),
+			labgrown: state.labgrown,
 			carat_from: state.caratFrom || undefined,
 			carat_to: state.caratTo || undefined,
+			ratio_from: state.ratioFrom || undefined,
+			ratio_to: state.ratioTo || undefined,
 			color: state.color.length ? state.color : undefined,
 			clarity: state.clarity.length ? state.clarity : undefined,
 			cut: state.cut.length ? state.cut : undefined,
+			fluorescence: state.fluorescence.length ? state.fluorescence : undefined,
 			sort_type: sortParts[0],
 			sort_direction: sortParts[1],
 			limit: 24,
@@ -1280,16 +1508,16 @@
 					});
 					checkbox.addEventListener('change', function () {
 						var id = checkbox.getAttribute('data-compare-id');
-						if (checkbox.checked) {
-							state.compareDiamonds[id] = diamondsById[id];
-						} else {
-							delete state.compareDiamonds[id];
-						}
-						var compareBtn = root.querySelector('#tjdb-open-compare');
-						if (compareBtn) {
-							compareBtn.textContent = 'Compare (' + compareCount() + ')';
-							compareBtn.disabled = !compareCount();
-						}
+						setCompared(diamondsById[id], checkbox.checked);
+					});
+				});
+
+				resultsEl.querySelectorAll('[data-compare-toggle]').forEach(function (toggle) {
+					toggle.addEventListener('click', function (e) {
+						e.stopPropagation();
+						var id = toggle.getAttribute('data-compare-toggle');
+						var active = !toggle.classList.contains('is-active');
+						setCompared(diamondsById[id], active);
 					});
 				});
 			})

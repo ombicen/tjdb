@@ -20,11 +20,16 @@ class DiamondQueryBuilder
     public const ALLOWED_COLORS = ['D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N'];
     public const ALLOWED_CLARITIES = ['FL', 'IF', 'VVS1', 'VVS2', 'VS1', 'VS2', 'SI1', 'SI2', 'SI3', 'I1', 'I2', 'I3'];
     public const ALLOWED_CUTS = ['ID', 'EX', 'VG', 'GD', 'FR', 'PR'];
+    // Nivoda's own enum name/spelling (DiamondFluorescenseIntensity) — kept
+    // as-is here since it's what the `flouresence` query field validates
+    // against; our REST arg is spelled normally ("fluorescence").
+    public const ALLOWED_FLUORESCENCE = ['NON', 'VSL', 'SLT', 'FNT', 'MED', 'STG', 'STN', 'VST'];
     public const ALLOWED_SORT_TYPES = ['popular', 'price', 'size', 'color', 'clarity', 'cut', 'price_per_carat', 'createdAt'];
 
     /**
      * @param array<string, mixed> $args Flat REST args: shapes, carat_from, carat_to,
-     *                                    color, clarity, cut, labgrown.
+     *                                    color, clarity, cut, fluorescence, ratio_from,
+     *                                    ratio_to, labgrown.
      * @return array<string, mixed> DiamondQuery variables.
      */
     public function build_query_variables(array $args): array
@@ -45,10 +50,24 @@ class DiamondQueryBuilder
             ]];
         }
 
+        if (isset($args['ratio_from']) || isset($args['ratio_to'])) {
+            $query['ratio'] = [
+                'from' => isset($args['ratio_from']) ? (float) $args['ratio_from'] : 0.0,
+                'to' => isset($args['ratio_to']) ? (float) $args['ratio_to'] : 10.0,
+            ];
+        }
+
         foreach (['color', 'clarity', 'cut', 'polish', 'symmetry'] as $enum_field) {
             if (! empty($args[$enum_field]) && is_array($args[$enum_field])) {
                 $query[$enum_field] = array_map('strtoupper', $args[$enum_field]);
             }
+        }
+
+        if (! empty($args['fluorescence']) && is_array($args['fluorescence'])) {
+            $query['flouresence'] = array_values(array_intersect(
+                array_map('strtoupper', $args['fluorescence']),
+                self::ALLOWED_FLUORESCENCE
+            ));
         }
 
         $query['labgrown'] = ! empty($args['labgrown']);

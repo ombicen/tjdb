@@ -141,6 +141,7 @@ class DiamondSearchEndpoint
                 'cert_pdf_url' => $cert['masked_pdf_url'] ?? $cert['pdfUrl'] ?? null,
                 'polish' => $cert['polish'] ?? null,
                 'symmetry' => $cert['symmetry'] ?? null,
+                'fluorescence' => $cert['floInt'] ?? null,
                 'length' => $cert['length'] ?? null,
                 'width' => $cert['width'] ?? null,
                 'depth' => $cert['depth'] ?? null,
