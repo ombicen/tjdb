@@ -78,6 +78,21 @@
 		return '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linejoin="round" stroke-linecap="round" aria-hidden="true">' + inner + '</svg>';
 	}
 
+	// UI icons from Lucide Icons, ISC license: https://lucide.dev/license
+	var LUCIDE_ICON_PATHS = {
+		gem: '<path d="M10.5 3 8 9l4 13 4-13-2.5-6" /><path d="M17 3a2 2 0 0 1 1.6.8l3 4a2 2 0 0 1 .013 2.382l-7.99 10.986a2 2 0 0 1-3.247 0l-7.99-10.986A2 2 0 0 1 2.4 7.8l2.998-3.997A2 2 0 0 1 7 3z" /><path d="M2 9h20" />',
+		check: '<path d="M20 6 9 17l-5-5" />',
+		grid: '<rect width="18" height="18" x="3" y="3" rx="2" /><path d="M3 9h18" /><path d="M3 15h18" /><path d="M9 3v18" /><path d="M15 3v18" />',
+		list: '<path d="M3 5h.01" /><path d="M3 12h.01" /><path d="M3 19h.01" /><path d="M8 5h13" /><path d="M8 12h13" /><path d="M8 19h13" />',
+		x: '<path d="M18 6 6 18" /><path d="m6 6 12 12" />',
+		sliders: '<path d="M10 5H3" /><path d="M12 19H3" /><path d="M14 3v4" /><path d="M16 17v4" /><path d="M21 12h-9" /><path d="M21 19h-5" /><path d="M21 5h-7" /><path d="M8 10v4" /><path d="M8 12H3" />',
+	};
+
+	function lucideIcon(name, className) {
+		var path = LUCIDE_ICON_PATHS[name] || LUCIDE_ICON_PATHS.gem;
+		return '<svg class="' + esc(className || 'tjdb-icon') + ' lucide lucide-' + esc(name) + '" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + path + '</svg>';
+	}
+
 	// Worst-to-best display order for the Cut/Color/Clarity range sliders —
 	// distinct from CUTS/COLORS/CLARITIES above (kept as-is since they're
 	// also used for the list-view columns and modal spec grid, where D-to-N
@@ -315,7 +330,7 @@
 			},
 			diamond: {
 				key: 'diamond',
-				label: 'Diamond',
+				label: 'Choose Diamond',
 				detail: state.diamond
 					? state.diamond.certificate.carats.toFixed(2) + 'ct ' + state.diamond.certificate.shape + ' — ' + formatPrice(state.diamond.price_cents)
 					: null,
@@ -323,7 +338,7 @@
 			},
 			complete: {
 				key: 'complete',
-				label: 'Review Your Ring',
+				label: 'Complete Ring',
 				detail: state.setting && state.setting.has_variations ? 'Select Ring Size' : null,
 				image: null,
 			},
@@ -345,7 +360,7 @@
 		var steps = buildSteps();
 		var completed = completedKeys();
 
-		var html = '<ol class="tjdb-stepper">';
+		var html = '<nav class="tjdb-stepper" aria-label="Design Your Ring"><span class="tjdb-stepper-segment tjdb-stepper-intro"><span class="tjdb-stepper-segment-content">Design Your Ring</span></span>';
 		steps.forEach(function (step, index) {
 			var isCompleted = completed.indexOf(step.key) !== -1;
 			var isCurrent = step.key === state.step;
@@ -354,12 +369,13 @@
 			// whichever one they actually want to start from.
 			var canSwitchEntryPoint = !state.setting && !state.diamond && !isCurrent && step.key !== 'complete';
 			var isClickable = isCompleted || canSwitchEntryPoint;
-			var classes = 'tjdb-stepper-item' + (isCurrent ? ' is-current' : '') + (isCompleted ? ' is-completed' : '') + (isClickable ? ' is-clickable' : '');
+			var classes = 'tjdb-stepper-segment' + (isCurrent ? ' is-current' : '') + (isCompleted ? ' is-completed' : '') + (isClickable ? ' is-clickable' : '');
 
-			html += '<li class="' + classes + '">';
-			html += '<button type="button" class="tjdb-stepper-button" data-step-jump="' + esc(step.key) + '"' + (isClickable ? '' : ' disabled') + '>';
-			html += '<span class="tjdb-stepper-circle">' + (isCompleted && !isCurrent ? '&#10003;' : index + 1) + '</span>';
+			html += '<button type="button" class="' + classes + '" data-step-jump="' + esc(step.key) + '"' + (isClickable ? '' : ' disabled') + '>';
+			html += '<span class="tjdb-stepper-segment-content">';
+			html += '<span class="tjdb-stepper-circle">' + (isCompleted && !isCurrent ? lucideIcon('check', 'tjdb-stepper-check') : index + 1) + '</span>';
 			html += '<span class="tjdb-stepper-text">';
+			html += '<span class="tjdb-stepper-kicker">' + (index + 1) + '</span>';
 			html += '<span class="tjdb-stepper-label">' + esc(step.label) + '</span>';
 			if (step.detail) {
 				html += '<span class="tjdb-stepper-detail">' + esc(step.detail) + '</span>';
@@ -371,11 +387,11 @@
 			if (step.image) {
 				html += '<img class="tjdb-stepper-thumb" src="' + esc(step.image) + '" alt="">';
 			} else {
-				html += '<svg class="tjdb-stepper-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M4 9L8 3h8l4 6-10 12L4 9z"/><path d="M4 9h16M8 3l1.5 6L12 21l2.5-12L16 3"/></svg>';
+				html += lucideIcon('gem', 'tjdb-stepper-icon');
 			}
-			html += '</button></li>';
+			html += '</span></button>';
 		});
-		html += '</ol>';
+		html += '</nav>';
 
 		return html;
 	}
@@ -615,12 +631,12 @@
 		chips.forEach(function (chip) {
 			html += '<span class="tjdb-chip">' + esc(chip.label);
 			if (chip.clear) {
-				html += '<button type="button" class="tjdb-chip-remove" data-clear-filter="' + esc(chip.clear) + '" aria-label="Remove ' + esc(chip.label) + ' filter">&times;</button>';
+				html += '<button type="button" class="tjdb-chip-remove" data-clear-filter="' + esc(chip.clear) + '" aria-label="Remove ' + esc(chip.label) + ' filter">' + lucideIcon('x', 'tjdb-chip-icon') + '</button>';
 			}
 			html += '</span>';
 		});
 		if (hasClearable) {
-			html += '<button type="button" class="tjdb-chip tjdb-chip-reset" id="tjdb-clear-filters">Reset All &times;</button>';
+			html += '<button type="button" class="tjdb-chip tjdb-chip-reset" id="tjdb-clear-filters">' + lucideIcon('x', 'tjdb-chip-icon') + '<span>Reset All</span></button>';
 		}
 		html += '</div>';
 		return html;
@@ -628,6 +644,7 @@
 
 	function renderFiltersPanel() {
 		var html = '<div class="tjdb-filters-panel">';
+		html += '<div class="tjdb-filters-heading">' + lucideIcon('sliders', 'tjdb-filters-heading-icon') + '<span>Filters</span></div>';
 		html += filterChipsHtml();
 		html += renderShapeSection();
 		html += renderCaratSection();
@@ -645,8 +662,8 @@
 	function renderToolbar() {
 		var html = '<div class="tjdb-toolbar">';
 		html += '<div class="tjdb-view-toggle">';
-		html += '<button type="button" data-view="grid" class="' + (state.viewMode === 'grid' ? 'active' : '') + '">Grid</button>';
-		html += '<button type="button" data-view="list" class="' + (state.viewMode === 'list' ? 'active' : '') + '">List</button>';
+		html += '<button type="button" data-view="grid" class="' + (state.viewMode === 'grid' ? 'active' : '') + '" aria-label="Grid view" title="Grid view">' + lucideIcon('grid', 'tjdb-toggle-icon') + '</button>';
+		html += '<button type="button" data-view="list" class="' + (state.viewMode === 'list' ? 'active' : '') + '" aria-label="List view" title="List view">' + lucideIcon('list', 'tjdb-toggle-icon') + '</button>';
 		html += '</div>';
 		html += '<button type="button" class="tjdb-compare-toggle" id="tjdb-open-compare"' + (compareCount() ? '' : ' disabled') + '>Compare (' + compareCount() + ')</button>';
 		html += '<label class="tjdb-sort-select">Sort by ';
@@ -978,7 +995,7 @@
 		specHtml += '</div>';
 
 		var html = '<div class="tjdb-modal tjdb-diamond-modal">';
-		html += '<button type="button" class="tjdb-modal-close" id="tjdb-modal-close" aria-label="Close">&times;</button>';
+		html += '<button type="button" class="tjdb-modal-close" id="tjdb-modal-close" aria-label="Close">' + lucideIcon('x', 'tjdb-modal-close-icon') + '</button>';
 		html += '<div class="tjdb-modal-media-col">';
 		html += '<div class="tjdb-modal-viewer" id="tjdb-modal-viewer">' + mediaMarkup(currentKey) + '</div>';
 		if (currentKey) {
@@ -1069,7 +1086,7 @@
 		overlay.className = 'tjdb-modal-overlay';
 
 		var html = '<div class="tjdb-modal tjdb-compare-modal">';
-		html += '<button type="button" class="tjdb-modal-close" id="tjdb-modal-close" aria-label="Close">&times;</button>';
+		html += '<button type="button" class="tjdb-modal-close" id="tjdb-modal-close" aria-label="Close">' + lucideIcon('x', 'tjdb-modal-close-icon') + '</button>';
 		html += '<h3>Compare Diamonds</h3>';
 		html += '<table class="tjdb-compare-table"><tbody>';
 

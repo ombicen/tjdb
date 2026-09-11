@@ -11,7 +11,7 @@ if (! defined('ABSPATH')) {
 /**
  * Renders "Choose this setting" wherever an eligible product's normal
  * purchase actions would otherwise appear (shop-loop cards, single product
- * page), and suppresses those normal actions so it's the only option —
+ * page), and suppresses those normal actions so it's the only option â€”
  * these settings are only sold as part of a diamond bundle.
  */
 class BuilderButton
@@ -34,7 +34,7 @@ class BuilderButton
         // woocommerce_before_single_product lands inside this theme's
         // reserved "WooCommerce Hook" Elementor widget slot, which is
         // collapsed to 0x0 by the theme's own CSS whenever it's empty
-        // (verified live — WooCommerce's own notices wrapper collapses the
+        // (verified live â€” WooCommerce's own notices wrapper collapses the
         // same way there). woocommerce_before_main_content instead fires
         // outside that slot, at the theme's actual content-wrapper level,
         // and renders full-width and visible (also verified live).
@@ -133,7 +133,7 @@ class BuilderButton
     }
 
     /**
-     * Full-width horizontal stepper above the whole product block — see
+     * Full-width horizontal stepper above the whole product block â€” see
      * woocommerce_before_main_content hook in init(). Only "Setting" is
      * ever "current" here since nothing else is chosen yet.
      */
@@ -153,11 +153,11 @@ class BuilderButton
             return;
         }
 
-        echo self::render_stepper_html('tjdb-stepper-top'); // phpcs:ignore -- already escaped internally.
+        echo self::render_product_stepper_html($product, 'tjdb-stepper-top'); // phpcs:ignore -- already escaped internally.
 
         // There's no WordPress hook available between the breadcrumb widget
         // and the product summary in this theme's Elementor single-product
-        // template — both are rendered together as one Elementor blob via
+        // template â€” both are rendered together as one Elementor blob via
         // the_content (verified empirically: a woocommerce_before_single_product_summary
         // mu-plugin marker never appeared in the rendered page). JS reposition
         // is the only reliable option here.
@@ -188,7 +188,7 @@ class BuilderButton
     }
 
     /**
-     * The builder page with no setting/diamond pre-selected — i.e. the
+     * The builder page with no setting/diamond pre-selected â€” i.e. the
      * diamond-first entry point.
      */
     public static function get_builder_base_url(): ?string
@@ -205,7 +205,7 @@ class BuilderButton
     /**
      * The same stepper component used everywhere: here (a static, pre-JS
      * render on product pages and the settings archive), and inside the
-     * builder SPA itself (assets/js/builder.js renderStepper()) — same
+     * builder SPA itself (assets/js/builder.js renderStepper()) â€” same
      * markup, same classes, same 3 steps. Nothing is ever "selected" here
      * (that only happens once you're actually in the SPA and pick
      * something), so Setting and Diamond are just plain entry-point links
@@ -213,41 +213,33 @@ class BuilderButton
      */
     public static function render_stepper_html(string $extra_class = 'tjdb-stepper-preview'): string
     {
-        // Always 3 steps — ring size (when the setting has variations) is
-        // chosen inline on the final "Complete" step, not a step of its own.
-        $steps = [
-            ['key' => 'setting', 'label' => __('Setting', 'topjewellery-diamond-builder'), 'current' => true, 'href' => self::get_archive_url()],
-            ['key' => 'diamond', 'label' => __('Diamond', 'topjewellery-diamond-builder'), 'current' => false, 'href' => self::get_builder_base_url()],
-            ['key' => 'complete', 'label' => __('Review Your Ring', 'topjewellery-diamond-builder'), 'current' => false, 'href' => null],
-        ];
-
-        ob_start();
-?>
-        <ol class="tjdb-stepper <?php echo esc_attr($extra_class); ?>">
-            <?php foreach ($steps as $index => $step) : ?>
-                <?php $tag = $step['href'] ? 'a' : 'span'; ?>
-                <li class="tjdb-stepper-item<?php echo $step['current'] ? ' is-current' : ''; ?><?php echo $step['href'] ? ' is-clickable' : ''; ?>">
-                    <<?php echo $tag; ?> class="tjdb-stepper-button"<?php echo $step['href'] ? ' href="' . esc_url($step['href']) . '"' : ''; ?>>
-                        <span class="tjdb-stepper-circle"><?php echo esc_html($index + 1); ?></span>
-                        <span class="tjdb-stepper-text">
-                            <span class="tjdb-stepper-label"><?php echo esc_html($step['label']); ?></span>
-                        </span>
-                        <?php echo self::stepper_icon_svg(); // phpcs:ignore -- static markup. ?>
-                    </<?php echo $tag; ?>>
-                </li>
-            <?php endforeach; ?>
-        </ol>
-<?php
-        return (string) ob_get_clean();
+        return Stepper::render(self::base_stepper_steps(), $extra_class);
     }
 
-    private static function stepper_icon_svg(): string
+    private static function render_product_stepper_html(\WC_Product $product, string $extra_class): string
     {
-        return '<svg class="tjdb-stepper-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M4 9L8 3h8l4 6-10 12L4 9z"/><path d="M4 9h16M8 3l1.5 6L12 21l2.5-12L16 3"/></svg>';
+        $steps = self::base_stepper_steps();
+        $steps[0]['detail'] = wp_strip_all_tags($product->get_price_html());
+        $steps[0]['image'] = wp_get_attachment_image_url($product->get_image_id(), 'woocommerce_thumbnail') ?: null;
+        $steps[0]['action_label'] = __('Change', 'topjewellery-diamond-builder');
+
+        return Stepper::render($steps, $extra_class);
     }
 
     /**
-     * "Choose This Setting" button only — the full-width stepper renders
+     * @return array<int, array<string, mixed>>
+     */
+    private static function base_stepper_steps(): array
+    {
+        return [
+            ['key' => 'setting', 'label' => __('Setting', 'topjewellery-diamond-builder'), 'current' => true, 'href' => self::get_archive_url()],
+            ['key' => 'diamond', 'label' => __('Choose Diamond', 'topjewellery-diamond-builder'), 'current' => false, 'href' => self::get_builder_base_url()],
+            ['key' => 'complete', 'label' => __('Complete Ring', 'topjewellery-diamond-builder'), 'current' => false, 'href' => null],
+        ];
+    }
+
+    /**
+     * "Choose This Setting" button only â€” the full-width stepper renders
      * once already, at the top of the page via render_top_stepper().
      */
     public static function render_product_page_block(\WC_Product $product): string
@@ -268,7 +260,7 @@ class BuilderButton
     /**
      * Fallback for themes/page builders (e.g. an Elementor Pro single-product
      * template) that don't fire woocommerce_single_product_summary in the
-     * usual place — drop [tjdb_build_button] directly into that template
+     * usual place â€” drop [tjdb_build_button] directly into that template
      * (an Elementor "Shortcode" widget), replacing its Add to Cart widget.
      */
     public function render_shortcode(): string

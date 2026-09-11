@@ -16,8 +16,9 @@
 		});
 
 		table.addEventListener('click', function (event) {
-			if (event.target.classList.contains('tjdb-remove-tier')) {
-				event.target.closest('tr').remove();
+			var removeButton = event.target.closest('.tjdb-remove-tier');
+			if (removeButton) {
+				removeButton.closest('tr').remove();
 			}
 		});
 	});

@@ -52,6 +52,10 @@ class SettingsPage
             true
         );
 
+        wp_register_style('tjdb-admin-icons', false, [], TJDB_VERSION);
+        wp_enqueue_style('tjdb-admin-icons');
+        wp_add_inline_style('tjdb-admin-icons', '.tjdb-admin-icon{width:16px;height:16px;vertical-align:-3px;stroke-width:2}.tjdb-remove-tier{display:inline-flex!important;align-items:center;justify-content:center;min-width:30px}');
+
         wp_localize_script('tjdb-settings-page', 'tjdbSettings', [
             'ajaxUrl' => admin_url('admin-ajax.php'),
             'nonce' => wp_create_nonce('tjdb_test_connection'),
@@ -269,7 +273,7 @@ class SettingsPage
                                 <td><input type="number" step="0.01" min="0" name="tier_carat_from[]" value="<?php echo esc_attr($tier['carat_from']); ?>"></td>
                                 <td><input type="number" step="0.01" min="0" name="tier_carat_to[]" value="<?php echo esc_attr($tier['carat_to'] ?? ''); ?>"></td>
                                 <td><input type="number" step="0.01" min="0" name="tier_margin_percent[]" value="<?php echo esc_attr($tier['margin_percent']); ?>"></td>
-                                <td><button type="button" class="button tjdb-remove-tier">&times;</button></td>
+                                <td><button type="button" class="button tjdb-remove-tier" aria-label="<?php esc_attr_e('Remove tier', 'topjewellery-diamond-builder'); ?>"><?php echo \TopJewelleryDiamondBuilder\Frontend\Stepper::lucide_icon('x', 'tjdb-admin-icon'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></button></td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
@@ -281,7 +285,7 @@ class SettingsPage
                         <td><input type="number" step="0.01" min="0" name="tier_carat_from[]" value=""></td>
                         <td><input type="number" step="0.01" min="0" name="tier_carat_to[]" value=""></td>
                         <td><input type="number" step="0.01" min="0" name="tier_margin_percent[]" value=""></td>
-                        <td><button type="button" class="button tjdb-remove-tier">&times;</button></td>
+                        <td><button type="button" class="button tjdb-remove-tier" aria-label="<?php esc_attr_e('Remove tier', 'topjewellery-diamond-builder'); ?>"><?php echo \TopJewelleryDiamondBuilder\Frontend\Stepper::lucide_icon('x', 'tjdb-admin-icon'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?></button></td>
                     </tr>
                 </template>
 

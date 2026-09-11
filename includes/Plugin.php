@@ -93,6 +93,7 @@ class Plugin
         require_once TJDB_PLUGIN_DIR . 'includes/Cart/CartIntegration.php';
 
         require_once TJDB_PLUGIN_DIR . 'includes/Assets/AssetsManager.php';
+        require_once TJDB_PLUGIN_DIR . 'includes/Frontend/Stepper.php';
         require_once TJDB_PLUGIN_DIR . 'includes/Frontend/BuilderShortcode.php';
         require_once TJDB_PLUGIN_DIR . 'includes/Frontend/SettingsArchiveShortcode.php';
         require_once TJDB_PLUGIN_DIR . 'includes/Frontend/BuilderButton.php';

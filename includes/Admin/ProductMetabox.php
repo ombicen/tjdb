@@ -55,9 +55,10 @@ class ProductMetabox
         $eligible = $product && $this->eligibility->is_eligible($product);
 
 ?>
+        <style>.tjdb-admin-icon{width:16px;height:16px;vertical-align:-3px;stroke-width:2}</style>
         <p>
             <?php if ($eligible) : ?>
-                <span style="color:#2a8;">&#10003; <?php esc_html_e('Eligible for the diamond builder (via category/tag).', 'topjewellery-diamond-builder'); ?></span>
+                <span style="color:#2a8;"><?php echo \TopJewelleryDiamondBuilder\Frontend\Stepper::lucide_icon('check', 'tjdb-admin-icon'); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped ?> <?php esc_html_e('Eligible for the diamond builder (via category/tag).', 'topjewellery-diamond-builder'); ?></span>
             <?php else : ?>
                 <span style="color:#888;"><?php esc_html_e('Not eligible — assign a category/tag configured under WooCommerce → Diamond Builder.', 'topjewellery-diamond-builder'); ?></span>
             <?php endif; ?>

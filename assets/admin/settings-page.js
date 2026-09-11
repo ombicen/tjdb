@@ -1,6 +1,16 @@
 (function () {
 	'use strict';
 
+	var ICONS = {
+		check: '<svg class="tjdb-admin-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5" /></svg>',
+		x: '<svg class="tjdb-admin-icon" xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18" /><path d="m6 6 12 12" /></svg>',
+	};
+
+	function setResult(result, icon, message) {
+		result.innerHTML = ICONS[icon] || '';
+		result.appendChild(document.createTextNode(' ' + message));
+	}
+
 	document.addEventListener('DOMContentLoaded', function () {
 		var button = document.getElementById('tjdb-test-connection');
 		var result = document.getElementById('tjdb-test-connection-result');
@@ -26,16 +36,16 @@
 				.then(function (json) {
 					button.disabled = false;
 					if (json.success) {
-						result.textContent = '✓ ' + json.data.message;
+						setResult(result, 'check', json.data.message);
 						result.style.color = 'green';
 					} else {
-						result.textContent = '✗ ' + (json.data && json.data.message ? json.data.message : 'Connection failed.');
+						setResult(result, 'x', json.data && json.data.message ? json.data.message : 'Connection failed.');
 						result.style.color = '#b32d2e';
 					}
 				})
 				.catch(function () {
 					button.disabled = false;
-					result.textContent = '✗ Request failed.';
+					setResult(result, 'x', 'Request failed.');
 					result.style.color = '#b32d2e';
 				});
 		});

@@ -223,7 +223,11 @@ class SettingsArchiveShortcode
     {
         // No product is ever "current" on this page — it renders without a
         // price/Change link (see BuilderButton::render_stepper_html()).
-        return BuilderButton::render_stepper_html('tjdb-stepper-top') . $grid_html;
+        return '<div class="tjdb-settings-archive">' .
+            BuilderButton::render_stepper_html('tjdb-stepper-top') .
+            '<div class="tjdb-archive-toolbar"><span>' . esc_html__('Engagement Ring Settings', 'topjewellery-diamond-builder') . '</span><span>' . esc_html__('Choose a setting, then pair it with a diamond.', 'topjewellery-diamond-builder') . '</span></div>' .
+            '<div class="tjdb-archive-grid-wrap">' . $grid_html . '</div>' .
+            '</div>';
     }
 
     /**
